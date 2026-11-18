@@ -1,0 +1,9 @@
+{
+  "key.minecraftparcel.open_parcel": "Open Minecraft Parcel",
+  "gui.minecraftparcel.open": "Parcel",
+  "gui.minecraftparcel.close": "Close",
+  "screen.minecraftparcel.title": "Minecraft Parcel",
+  "screen.minecraftparcel.subtitle": "Send items to your Minecraft friends",
+  "screen.minecraftparcel.status": "Postal service interface is ready.",
+  "screen.minecraftparcel.next_step": "Friend selection and parcel delivery are coming next."
+}
