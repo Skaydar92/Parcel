@@ -1,7 +1,0 @@
-/time set noon
-/data get entity @s
-/data get entity @s UUID
-/give @s minecraft:diamond 64
-/data get entity Dev uuid
-/data get entity Dev
-/data get entity @s UUID
