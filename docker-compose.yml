@@ -1,7 +1,7 @@
 
 services:
   parcel-backend:
-    image: ghcr.io/skaydar92/minecraft-parcel-backend:0.3.1
+    image: ghcr.io/skaydar92/minecraft-parcel-backend:latest
     container_name: minecraft-parcel-backend
     restart: unless-stopped
 
