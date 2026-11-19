@@ -40,6 +40,6 @@ public final class MinecraftParcel {
     }
 
     private static final class BuildInfo {
-        private static final String VERSION = "0.3.0";
+        private static final String VERSION = "0.3.1";
     }
 }
