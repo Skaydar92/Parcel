@@ -50,11 +50,6 @@ public final class ParcelApiClient {
             );
         }
 
-        System.out.println("Parcel Player: " + playerName);
-        System.out.println(
-                "Parcel UUID: " + minecraft.getUser().getProfileId()
-        );
-
         try {
             return new ParcelApiClient(
                     playerName,
