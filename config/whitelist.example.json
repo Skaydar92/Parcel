@@ -1,0 +1,15 @@
+
+{
+  "players": [
+    {
+      "name": "Spieler1",
+      "uuid": "",
+      "enabled": true
+    },
+    {
+      "name": "Spieler2",
+      "uuid": "",
+      "enabled": true
+    }
+  ]
+}

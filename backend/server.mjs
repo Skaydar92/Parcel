@@ -2,6 +2,8 @@
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { readFile, writeFile, rename } from 'node:fs/promises';
+import { watch } from 'node:fs';
+import path from 'node:path';
 
 const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 8787);
@@ -12,6 +14,7 @@ const CLAIM_LEASE_MS = 5 * 60 * 1000;
 const MAX_BODY_SIZE = 1_000_000;
 const PROFILE_CACHE_MS = 15 * 60 * 1000;
 const NEGATIVE_CACHE_MS = 30 * 1000;
+const WHITELIST_RELOAD_DELAY_MS = 300;
 
 let state = { deliveries: [] };
 let whitelist = new Set();
@@ -208,6 +211,41 @@ async function loadWhitelist() {
     whitelist = allowed;
 
     console.log(`${whitelist.size} Spieler in der Parcel-Whitelist geladen.`);
+}
+
+function watchWhitelist() {
+    const whitelistDirectory = path.dirname(WHITELIST_FILE);
+    const whitelistFilename = path.basename(WHITELIST_FILE);
+
+    let reloadTimer;
+
+    const watcher = watch(whitelistDirectory, (eventType, filename) => {
+        if (filename && filename.toString() !== whitelistFilename) {
+            return;
+        }
+
+        clearTimeout(reloadTimer);
+
+        reloadTimer = setTimeout(async () => {
+            try {
+                await loadWhitelist();
+                console.log('Parcel-Whitelist wurde aktualisiert.');
+            } catch (error) {
+                console.error(
+                    'Whitelist konnte nicht neu geladen werden. Die bisherige Whitelist bleibt aktiv:',
+                    error.message
+                );
+            }
+        }, WHITELIST_RELOAD_DELAY_MS);
+    });
+
+    watcher.on('error', error => {
+        console.error('Fehler bei der Whitelist-Dateiüberwachung:', error);
+    });
+
+    console.log(`Überwache Whitelist: ${WHITELIST_FILE}`);
+
+    return watcher;
 }
 
 const persist = () => {
@@ -507,7 +545,12 @@ const server = http.createServer(async (req, res) => {
 });
 
 await loadWhitelist();
+const whitelistWatcher = watchWhitelist();
 
 server.listen(PORT, HOST, () => {
     console.log(`Minecraft Parcel API listening on http://${HOST}:${PORT}`);
+});
+
+server.on('close', () => {
+    whitelistWatcher.close();
 });

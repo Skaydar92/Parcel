@@ -1,0 +1,79 @@
+
+# ==================================================
+# Git
+# ==================================================
+.git/
+
+# ==================================================
+# Gradle
+# ==================================================
+**/.gradle/
+**/build/
+
+# Gradle Wrapper bleibt versioniert
+!mod/gradle/wrapper/gradle-wrapper.jar
+!mod/gradle/wrapper/gradle-wrapper.properties
+
+# ==================================================
+# Minecraft / NeoForge Development
+# ==================================================
+mod/run/
+**/run/
+
+# Minecraft-Spielstände und lokale Konfigurationen
+saves/
+logs/
+crash-reports/
+options.txt
+usercache.json
+usernamecache.json
+
+# ==================================================
+# Sensitive Data
+# ==================================================
+*.token
+*-token.txt
+parcel-token.txt
+skaydar92-token.txt
+
+.env
+.env.*
+!.env.example
+
+# Backend-Daten und lokale Spielerdaten
+backend/data/
+backend/parcels.json
+backend/whitelist.json
+
+# ==================================================
+# Node.js
+# ==================================================
+**/node_modules/
+npm-debug.log*
+.npm/
+
+# ==================================================
+# IDE
+# ==================================================
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# ==================================================
+# Operating System
+# ==================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================================================
+# Logs
+# ==================================================
+*.log
+*.log.*
+
+# Betreiber-Konfiguration und Spielerdaten
+config/whitelist.json
+backend/data/

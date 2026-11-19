@@ -1,0 +1,20 @@
+
+services:
+  parcel-backend:
+    image: ghcr.io/skaydar92/minecraft-parcel-backend:0.3.1
+    container_name: minecraft-parcel-backend
+    restart: unless-stopped
+
+    ports:
+      - "8787:8787"
+
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      NODE_ENV: production
+      PARCEL_DB: /app/data/parcels.json
+      PARCEL_WHITELIST: /app/config/whitelist.json
+
+    volumes:
+      - ./backend/data:/app/data
+      - ./config:/app/config:ro
