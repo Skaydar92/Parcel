@@ -1,3 +1,4 @@
+
 {
   "key.minecraftparcel.open_parcel": "Open Minecraft Parcel",
   "gui.minecraftparcel.open": "Parcel",
@@ -5,5 +6,77 @@
   "screen.minecraftparcel.title": "Minecraft Parcel",
   "screen.minecraftparcel.subtitle": "Send items to your Minecraft friends",
   "screen.minecraftparcel.status": "Postal service interface is ready.",
-  "screen.minecraftparcel.next_step": "Friend selection and parcel delivery are coming next."
+  "screen.minecraftparcel.next_step": "Friend selection and parcel delivery are coming next.",
+
+  "gui.minecraftparcel.brand": "MINECRAFT PARCEL",
+  "gui.minecraftparcel.subtitle": "Your Postal Service",
+  "gui.minecraftparcel.tagline": "CROSS-WORLD ITEM DELIVERY",
+
+  "gui.minecraftparcel.tab.inbox": "Inbox",
+  "gui.minecraftparcel.tab.send": "Send",
+  "gui.minecraftparcel.tab.friends": "Friends",
+  "gui.minecraftparcel.tab.settings": "Settings",
+
+  "gui.minecraftparcel.button.refresh": "Refresh",
+  "gui.minecraftparcel.button.claim": "Claim",
+  "gui.minecraftparcel.button.send": "Send Parcel",
+  "gui.minecraftparcel.button.save": "Save",
+  "gui.minecraftparcel.button.test_connection": "Test Connection",
+  "gui.minecraftparcel.button.close": "Close",
+
+  "gui.minecraftparcel.field.recipient": "Recipient Player Name",
+  "gui.minecraftparcel.field.player_name_hint": "Minecraft Username",
+  "gui.minecraftparcel.field.protocol": "Protocol",
+  "gui.minecraftparcel.field.server_address": "Server Address",
+  "gui.minecraftparcel.field.port": "Port",
+
+  "gui.minecraftparcel.friends.title": "Your Friends",
+  "gui.minecraftparcel.friends.unavailable": "Friend list integration is not ready yet.",
+
+  "gui.minecraftparcel.settings.title": "API Settings",
+  "gui.minecraftparcel.send.title": "Send a Parcel",
+  "gui.minecraftparcel.send.selection_count": "%1$s stacks | %2$s items",
+  "gui.minecraftparcel.send.inventory_hint": "Inventory - Select items",
+
+  "gui.minecraftparcel.inbox.title": "Your Inbox",
+  "gui.minecraftparcel.inbox.package_number": "Parcel %1$s",
+  "gui.minecraftparcel.inbox.package_details": "%1$s stacks | From: %2$s",
+  "gui.minecraftparcel.sender.unknown": "Unknown",
+
+  "gui.minecraftparcel.footer": "Minecraft Parcel | %1$s:%2$s",
+
+  "gui.minecraftparcel.status.not_loaded": "Not loaded yet.",
+  "gui.minecraftparcel.status.select_items": "Select items and enter a player name.",
+  "gui.minecraftparcel.status.not_tested": "Not tested yet.",
+  "gui.minecraftparcel.status.invalid_port": "Invalid port.",
+  "gui.minecraftparcel.status.settings_saved": "Settings saved.",
+  "gui.minecraftparcel.status.error": "Error: %1$s",
+  "gui.minecraftparcel.status.testing_connection": "Testing connection...",
+  "gui.minecraftparcel.status.connection_failed": "Connection failed: %1$s",
+  "gui.minecraftparcel.status.connection_success": "Connection successful.",
+  "gui.minecraftparcel.status.connection_result": "%1$s",
+  "gui.minecraftparcel.status.connecting": "Connecting to %1$s:%2$s...",
+  "gui.minecraftparcel.status.inbox_empty": "Your inbox is empty.",
+  "gui.minecraftparcel.status.packages_found": "%1$s parcel(s) found.",
+  "gui.minecraftparcel.status.local_configuration": "Local configuration: %1$s",
+  "gui.minecraftparcel.status.invalid_player_name": "Invalid Minecraft username.",
+  "gui.minecraftparcel.status.serialization_failed": "Serialization failed: %1$s",
+  "gui.minecraftparcel.status.no_valid_items": "No valid items selected.",
+  "gui.minecraftparcel.status.inventory_check": "Server is checking your inventory...",
+  "gui.minecraftparcel.status.inventory_confirmed": "Inventory confirmed. Sending parcel...",
+  "gui.minecraftparcel.status.parcel_sent": "Parcel successfully sent to %1$s.",
+  "gui.minecraftparcel.status.restoring_items": "Sending failed. Restoring items...",
+  "gui.minecraftparcel.status.send_failed_restored": "Sending failed. Items were restored: %1$s",
+  "gui.minecraftparcel.status.critical_restore_failed": "CRITICAL: Sending and item restoration failed: %1$s. Please check your server inventory.",
+  "gui.minecraftparcel.status.claiming": "Claiming parcel...",
+  "gui.minecraftparcel.status.claim_failed": "Claim failed: %1$s",
+  "gui.minecraftparcel.status.no_player_claim": "No player available. The reservation expires after five minutes.",
+  "gui.minecraftparcel.status.empty_package": "This parcel contains no items.",
+  "gui.minecraftparcel.status.checking_inventory_space": "Server is checking available inventory space...",
+  "gui.minecraftparcel.status.items_inserted": "Items inserted. Confirming parcel...",
+  "gui.minecraftparcel.status.claim_confirmation_failed": "Items were inserted, but backend confirmation failed: %1$s",
+  "gui.minecraftparcel.status.items_claimed": "%1$s item stack(s) successfully claimed.",
+  "gui.minecraftparcel.status.selection_changed": "Selection changed.",
+
+  "gui.minecraftparcel.error.no_player": "No player available."
 }

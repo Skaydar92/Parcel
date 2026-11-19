@@ -12,11 +12,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +50,9 @@ public final class ParcelScreen extends Screen {
     private final Map<Integer, ItemStack> selectedSlots =
             new LinkedHashMap<>();
 
+    private final Map<String, ResolvableProfile> senderProfiles =
+            new LinkedHashMap<>();
+
     private Tab activeTab = Tab.INBOX;
 
     private int panelLeft;
@@ -66,11 +71,17 @@ public final class ParcelScreen extends Screen {
 
     private List<ParcelApiClient.Delivery> deliveries = List.of();
 
-    private String inboxStatus = "Noch nicht geladen.";
-    private String selectionStatus =
-            "Wähle Items und gib einen Spielernamen ein.";
+    private Component inboxStatus =
+            Component.translatable("gui.minecraftparcel.status.not_loaded");
 
-    private String settingsStatus = "Noch nicht getestet.";
+    private Component selectionStatus =
+            Component.translatable("gui.minecraftparcel.status.select_items");
+
+    private Component settingsStatus =
+            Component.translatable("gui.minecraftparcel.status.not_tested");
+
+    private String settingsStatusKey =
+            "gui.minecraftparcel.status.not_tested";
 
     private EditBox recipientField;
     private EditBox apiProtocolField;
@@ -84,14 +95,14 @@ public final class ParcelScreen extends Screen {
     ) {}
 
     public ParcelScreen(Screen parent) {
-        super(Component.literal("Minecraft Parcel"));
+        super(Component.translatable("screen.minecraftparcel.title"));
         this.parent = parent;
     }
 
     @Override
     protected void init() {
         panelWidth = Math.min(500, this.width - 20);
-        panelHeight = Math.min(260, this.height - 20);
+        panelHeight = Math.min(340, this.height - 20);
 
         panelLeft = (this.width - panelWidth) / 2;
         panelTop = (this.height - panelHeight) / 2;
@@ -100,12 +111,12 @@ public final class ParcelScreen extends Screen {
                 + (panelWidth - 126) / 2;
 
         inventoryStartX = contentCenter - GRID_WIDTH / 2;
-        inventoryStartY = panelTop + 122;
+        inventoryStartY = panelTop + 145;
 
         int sidebarX = panelLeft + 10;
 
         addRenderableWidget(Button.builder(
-                Component.literal("Postfach"),
+                Component.translatable("gui.minecraftparcel.tab.inbox"),
                 button -> changeTab(Tab.INBOX)
         ).bounds(
                 sidebarX,
@@ -115,7 +126,7 @@ public final class ParcelScreen extends Screen {
         ).build());
 
         addRenderableWidget(Button.builder(
-                Component.literal("Versenden"),
+                Component.translatable("gui.minecraftparcel.tab.send"),
                 button -> changeTab(Tab.SEND)
         ).bounds(
                 sidebarX,
@@ -125,7 +136,7 @@ public final class ParcelScreen extends Screen {
         ).build());
 
         addRenderableWidget(Button.builder(
-                Component.literal("Freunde"),
+                Component.translatable("gui.minecraftparcel.tab.friends"),
                 button -> changeTab(Tab.FRIENDS)
         ).bounds(
                 sidebarX,
@@ -135,7 +146,7 @@ public final class ParcelScreen extends Screen {
         ).build());
 
         addRenderableWidget(Button.builder(
-                Component.literal("Einstellungen"),
+                Component.translatable("gui.minecraftparcel.tab.settings"),
                 button -> changeTab(Tab.SETTINGS)
         ).bounds(
                 sidebarX,
@@ -146,7 +157,7 @@ public final class ParcelScreen extends Screen {
 
         if (activeTab == Tab.INBOX) {
             addRenderableWidget(Button.builder(
-                    Component.literal("Aktualisieren"),
+                    Component.translatable("gui.minecraftparcel.button.refresh"),
                     button -> refreshInbox()
             ).bounds(
                     panelLeft + panelWidth - 110,
@@ -161,7 +172,7 @@ public final class ParcelScreen extends Screen {
                 ParcelApiClient.Delivery delivery = deliveries.get(i);
 
                 addRenderableWidget(Button.builder(
-                        Component.literal("Abholen"),
+                        Component.translatable("gui.minecraftparcel.button.claim"),
                         button -> claimDelivery(delivery)
                 ).bounds(
                         panelLeft + panelWidth - 91,
@@ -183,18 +194,18 @@ public final class ParcelScreen extends Screen {
                     panelTop + 84,
                     220,
                     20,
-                    Component.literal("Empfänger-Spielername")
+                    Component.translatable("gui.minecraftparcel.field.recipient")
             );
 
             recipientField.setMaxLength(16);
             recipientField.setHint(
-                    Component.literal("Minecraft-Spielername")
+                    Component.translatable("gui.minecraftparcel.field.player_name_hint")
             );
 
             addRenderableWidget(recipientField);
 
             addRenderableWidget(Button.builder(
-                    Component.literal("Paket senden"),
+                    Component.translatable("gui.minecraftparcel.button.send"),
                     button -> sendParcel()
             ).bounds(
                     panelLeft + panelWidth - 110,
@@ -211,7 +222,7 @@ public final class ParcelScreen extends Screen {
                     panelTop + 83,
                     75,
                     20,
-                    Component.literal("Protokoll")
+                    Component.translatable("gui.minecraftparcel.field.protocol")
             );
 
             apiProtocolField.setMaxLength(5);
@@ -226,14 +237,12 @@ public final class ParcelScreen extends Screen {
                     panelTop + 83,
                     155,
                     20,
-                    Component.literal("Serveradresse")
+                    Component.translatable("gui.minecraftparcel.field.server_address")
             );
 
             apiHostField.setMaxLength(253);
             apiHostField.setValue(ParcelConfig.getHost());
-            apiHostField.setHint(
-                    Component.literal("127.0.0.1")
-            );
+            apiHostField.setHint(Component.literal("127.0.0.1"));
 
             addRenderableWidget(apiHostField);
 
@@ -243,7 +252,7 @@ public final class ParcelScreen extends Screen {
                     panelTop + 123,
                     80,
                     20,
-                    Component.literal("Port")
+                    Component.translatable("gui.minecraftparcel.field.port")
             );
 
             apiPortField.setMaxLength(5);
@@ -255,7 +264,7 @@ public final class ParcelScreen extends Screen {
             addRenderableWidget(apiPortField);
 
             addRenderableWidget(Button.builder(
-                    Component.literal("Speichern"),
+                    Component.translatable("gui.minecraftparcel.button.save"),
                     button -> saveApiSettings()
             ).bounds(
                     contentCenter - 110,
@@ -265,7 +274,7 @@ public final class ParcelScreen extends Screen {
             ).build());
 
             addRenderableWidget(Button.builder(
-                    Component.literal("Verbindung testen"),
+                    Component.translatable("gui.minecraftparcel.button.test_connection"),
                     button -> testApiConnection()
             ).bounds(
                     contentCenter + 2,
@@ -276,7 +285,7 @@ public final class ParcelScreen extends Screen {
         }
 
         addRenderableWidget(Button.builder(
-                Component.literal("Schließen"),
+                Component.translatable("gui.minecraftparcel.button.close"),
                 button -> onClose()
         ).bounds(
                 panelLeft + panelWidth - 94,
@@ -289,6 +298,11 @@ public final class ParcelScreen extends Screen {
     private void changeTab(Tab tab) {
         activeTab = tab;
         rebuildWidgets();
+    }
+
+    private void setSettingsStatus(String key, Object... arguments) {
+        settingsStatusKey = key;
+        settingsStatus = Component.translatable(key, arguments);
     }
 
     private void saveApiSettings() {
@@ -309,18 +323,20 @@ public final class ParcelScreen extends Screen {
         try {
             port = Integer.parseInt(portText);
         } catch (NumberFormatException exception) {
-            settingsStatus = "Ungültiger Port.";
+            setSettingsStatus("gui.minecraftparcel.status.invalid_port");
             return;
         }
 
         try {
             ParcelConfig.save(protocol, host, port);
 
-            settingsStatus = "Einstellungen gespeichert.";
-
+            setSettingsStatus("gui.minecraftparcel.status.settings_saved");
             inboxRequested = false;
         } catch (IOException | IllegalArgumentException exception) {
-            settingsStatus = "Fehler: " + exception.getMessage();
+            setSettingsStatus(
+                    "gui.minecraftparcel.status.error",
+                    exception.getMessage()
+            );
         }
     }
 
@@ -331,12 +347,12 @@ public final class ParcelScreen extends Screen {
 
         saveApiSettings();
 
-        if (!"Einstellungen gespeichert.".equals(settingsStatus)) {
+        if (!"gui.minecraftparcel.status.settings_saved".equals(settingsStatusKey)) {
             return;
         }
 
         connectionTesting = true;
-        settingsStatus = "Verbindung wird getestet ...";
+        setSettingsStatus("gui.minecraftparcel.status.testing_connection");
 
         ParcelApiClient.testConnection().whenComplete(
                 (result, error) ->
@@ -344,11 +360,14 @@ public final class ParcelScreen extends Screen {
                             connectionTesting = false;
 
                             if (error != null) {
-                                settingsStatus =
-                                        "Verbindung fehlgeschlagen: "
-                                                + errorMessage(error);
+                                setSettingsStatus(
+                                        "gui.minecraftparcel.status.connection_failed",
+                                        errorMessage(error)
+                                );
                             } else {
-                                settingsStatus = result;
+                                setSettingsStatus(
+                                        "gui.minecraftparcel.status.connection_success"
+                                );
                             }
                         })
         );
@@ -362,11 +381,11 @@ public final class ParcelScreen extends Screen {
         inboxRequested = true;
         inboxLoading = true;
 
-        inboxStatus = "Verbinde mit "
-                + ParcelConfig.getHost()
-                + ":"
-                + ParcelConfig.getPort()
-                + " ...";
+        inboxStatus = Component.translatable(
+                "gui.minecraftparcel.status.connecting",
+                ParcelConfig.getHost(),
+                ParcelConfig.getPort()
+        );
 
         try {
             ParcelApiClient client = ParcelApiClient.createLocal();
@@ -376,16 +395,21 @@ public final class ParcelScreen extends Screen {
                         inboxLoading = false;
 
                         if (error != null) {
-                            inboxStatus = "Verbindung fehlgeschlagen: "
-                                    + errorMessage(error);
+                            inboxStatus = Component.translatable(
+                                    "gui.minecraftparcel.status.connection_failed",
+                                    errorMessage(error)
+                            );
                             return;
                         }
 
                         deliveries = result;
 
                         inboxStatus = result.isEmpty()
-                                ? "Dein Postfach ist leer."
-                                : result.size() + " Paket(e) gefunden.";
+                                ? Component.translatable("gui.minecraftparcel.status.inbox_empty")
+                                : Component.translatable(
+                                        "gui.minecraftparcel.status.packages_found",
+                                        result.size()
+                                );
 
                         if (activeTab == Tab.INBOX) {
                             rebuildWidgets();
@@ -395,8 +419,10 @@ public final class ParcelScreen extends Screen {
 
         } catch (IOException exception) {
             inboxLoading = false;
-            inboxStatus = "Lokale Konfiguration: "
-                    + exception.getMessage();
+            inboxStatus = Component.translatable(
+                    "gui.minecraftparcel.status.local_configuration",
+                    exception.getMessage()
+            );
         }
     }
 
@@ -408,7 +434,9 @@ public final class ParcelScreen extends Screen {
         String recipientName = recipientField.getValue().trim();
 
         if (!recipientName.matches("[a-zA-Z0-9_]{3,16}")) {
-            selectionStatus = "Ungültiger Minecraft-Spielername.";
+            selectionStatus = Component.translatable(
+                    "gui.minecraftparcel.status.invalid_player_name"
+            );
             return;
         }
 
@@ -417,13 +445,17 @@ public final class ParcelScreen extends Screen {
         try {
             serialized = serializeSelectedItems();
         } catch (Exception exception) {
-            selectionStatus = "Serialisierung fehlgeschlagen: "
-                    + exception.getMessage();
+            selectionStatus = Component.translatable(
+                    "gui.minecraftparcel.status.serialization_failed",
+                    exception.getMessage()
+            );
             return;
         }
 
         if (serialized.isEmpty()) {
-            selectionStatus = "Keine gültigen Items ausgewählt.";
+            selectionStatus = Component.translatable(
+                    "gui.minecraftparcel.status.no_valid_items"
+            );
             return;
         }
 
@@ -445,7 +477,9 @@ public final class ParcelScreen extends Screen {
         removeData.add("items", removals);
 
         sendInProgress = true;
-        selectionStatus = "Server prüft dein Inventar ...";
+        selectionStatus = Component.translatable(
+                "gui.minecraftparcel.status.inventory_check"
+        );
 
         String requestId = UUID.randomUUID().toString();
 
@@ -455,12 +489,13 @@ public final class ParcelScreen extends Screen {
                 inventoryResult -> {
                     if (!inventoryResult.success()) {
                         sendInProgress = false;
-                        selectionStatus = inventoryResult.message();
+                        selectionStatus = Component.literal(inventoryResult.message());
                         return;
                     }
 
-                    selectionStatus =
-                            "Inventar bestätigt. Übertrage Paket ...";
+                    selectionStatus = Component.translatable(
+                            "gui.minecraftparcel.status.inventory_confirmed"
+                    );
 
                     try {
                         ParcelApiClient client =
@@ -489,10 +524,10 @@ public final class ParcelScreen extends Screen {
                                                     ? recipientName
                                                     : result.recipientName();
 
-                                    selectionStatus =
-                                            "Paket erfolgreich an "
-                                                    + confirmedName
-                                                    + " versendet.";
+                                    selectionStatus = Component.translatable(
+                                            "gui.minecraftparcel.status.parcel_sent",
+                                            confirmedName
+                                    );
                                 })
                         );
 
@@ -522,8 +557,9 @@ public final class ParcelScreen extends Screen {
         restoreData.addProperty("deliveryId", "refund-" + requestId);
         restoreData.add("items", items);
 
-        selectionStatus =
-                "Versand fehlgeschlagen. Stelle Items wieder her ...";
+        selectionStatus = Component.translatable(
+                "gui.minecraftparcel.status.restoring_items"
+        );
 
         ParcelNetwork.send(
                 "ADD",
@@ -532,14 +568,15 @@ public final class ParcelScreen extends Screen {
                     sendInProgress = false;
 
                     if (result.success()) {
-                        selectionStatus = "Versand fehlgeschlagen. "
-                                + "Items wurden wiederhergestellt: "
-                                + originalError;
+                        selectionStatus = Component.translatable(
+                                "gui.minecraftparcel.status.send_failed_restored",
+                                originalError
+                        );
                     } else {
-                        selectionStatus = "KRITISCH: Versand fehlgeschlagen und "
-                                + "Wiederherstellung fehlgeschlagen: "
-                                + result.message()
-                                + ". Bitte Serverinventar prüfen.";
+                        selectionStatus = Component.translatable(
+                                "gui.minecraftparcel.status.critical_restore_failed",
+                                result.message()
+                        );
                     }
                 }
         );
@@ -551,7 +588,9 @@ public final class ParcelScreen extends Screen {
         }
 
         inboxLoading = true;
-        inboxStatus = "Paket wird abgeholt ...";
+        inboxStatus = Component.translatable(
+                "gui.minecraftparcel.status.claiming"
+        );
 
         try {
             ParcelApiClient client = ParcelApiClient.createLocal();
@@ -561,8 +600,10 @@ public final class ParcelScreen extends Screen {
                             Minecraft.getInstance().execute(() -> {
                                 if (claimError != null) {
                                     inboxLoading = false;
-                                    inboxStatus = "Abholung fehlgeschlagen: "
-                                            + errorMessage(claimError);
+                                    inboxStatus = Component.translatable(
+                                            "gui.minecraftparcel.status.claim_failed",
+                                            errorMessage(claimError)
+                                    );
                                     return;
                                 }
 
@@ -572,8 +613,10 @@ public final class ParcelScreen extends Screen {
 
         } catch (IOException exception) {
             inboxLoading = false;
-            inboxStatus = "Lokale Konfiguration: "
-                    + exception.getMessage();
+            inboxStatus = Component.translatable(
+                    "gui.minecraftparcel.status.local_configuration",
+                    exception.getMessage()
+            );
         }
     }
 
@@ -583,14 +626,17 @@ public final class ParcelScreen extends Screen {
     ) {
         if (Minecraft.getInstance().player == null) {
             inboxLoading = false;
-            inboxStatus = "Kein Spieler verfügbar. "
-                    + "Die Reservierung läuft nach fünf Minuten ab.";
+            inboxStatus = Component.translatable(
+                    "gui.minecraftparcel.status.no_player_claim"
+            );
             return;
         }
 
         if (claimed.items() == null || claimed.items().isEmpty()) {
             inboxLoading = false;
-            inboxStatus = "Das Paket enthält keine Items.";
+            inboxStatus = Component.translatable(
+                    "gui.minecraftparcel.status.empty_package"
+            );
             return;
         }
 
@@ -598,8 +644,9 @@ public final class ParcelScreen extends Screen {
         addData.addProperty("deliveryId", claimed.deliveryId());
         addData.add("items", claimed.items());
 
-        inboxStatus =
-                "Server prüft den verfügbaren Inventarplatz ...";
+        inboxStatus = Component.translatable(
+                "gui.minecraftparcel.status.checking_inventory_space"
+        );
 
         ParcelNetwork.send(
                 "ADD",
@@ -607,13 +654,16 @@ public final class ParcelScreen extends Screen {
                 result -> {
                     if (!result.success()) {
                         inboxLoading = false;
-                        inboxStatus = "Abholung fehlgeschlagen: "
-                                + result.message();
+                        inboxStatus = Component.translatable(
+                                "gui.minecraftparcel.status.claim_failed",
+                                result.message()
+                        );
                         return;
                     }
 
-                    inboxStatus =
-                            "Items eingefügt. Bestätige Paket ...";
+                    inboxStatus = Component.translatable(
+                            "gui.minecraftparcel.status.items_inserted"
+                    );
 
                     client.completeClaim(
                             claimed.deliveryId(),
@@ -623,15 +673,17 @@ public final class ParcelScreen extends Screen {
                                 inboxLoading = false;
 
                                 if (completeError != null) {
-                                    inboxStatus = "Items wurden eingefügt, "
-                                            + "aber die Backend-Bestätigung "
-                                            + "ist fehlgeschlagen: "
-                                            + errorMessage(completeError);
+                                    inboxStatus = Component.translatable(
+                                            "gui.minecraftparcel.status.claim_confirmation_failed",
+                                            errorMessage(completeError)
+                                    );
                                     return;
                                 }
 
-                                inboxStatus = claimed.items().size()
-                                        + " Item-Stapel erfolgreich abgeholt.";
+                                inboxStatus = Component.translatable(
+                                        "gui.minecraftparcel.status.items_claimed",
+                                        claimed.items().size()
+                                );
 
                                 refreshInbox();
                             })
@@ -726,14 +778,20 @@ public final class ParcelScreen extends Screen {
             selectedSlots.put(slot, stack.copy());
         }
 
-        selectionStatus = "Auswahl geändert.";
+        selectionStatus = Component.translatable(
+                "gui.minecraftparcel.status.selection_changed"
+        );
     }
 
     private List<SerializedItem> serializeSelectedItems() {
         Minecraft minecraft = Minecraft.getInstance();
 
         if (minecraft.player == null) {
-            throw new IllegalStateException("Kein Spieler verfügbar.");
+            throw new IllegalStateException(
+                    Component.translatable(
+                            "gui.minecraftparcel.error.no_player"
+                    ).getString()
+            );
         }
 
         var ops = minecraft.player.level()
@@ -960,7 +1018,7 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal("MINECRAFT PARCEL"),
+                Component.translatable("gui.minecraftparcel.brand"),
                 panelLeft + 69,
                 panelTop + 19,
                 0xFFFFFFFF
@@ -968,7 +1026,7 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal("Dein Postdienst"),
+                Component.translatable("gui.minecraftparcel.subtitle"),
                 contentCenter,
                 panelTop + 14,
                 0xFFFFFFFF
@@ -976,7 +1034,7 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal("WELTÜBERGREIFENDER ITEM-VERSAND"),
+                Component.translatable("gui.minecraftparcel.tagline"),
                 contentCenter,
                 panelTop + 27,
                 0xFF9AAAC2
@@ -984,16 +1042,16 @@ public final class ParcelScreen extends Screen {
 
         renderActiveTab(graphics);
 
+        if (activeTab == Tab.SEND) {
+            renderInventorySlots(graphics, mouseX, mouseY);
+        }
+
         super.extractRenderState(
                 graphics,
                 mouseX,
                 mouseY,
                 partialTick
         );
-
-        if (activeTab == Tab.SEND) {
-            renderInventorySlots(graphics, mouseX, mouseY);
-        }
     }
 
     private void renderActiveTab(GuiGraphicsExtractor graphics) {
@@ -1005,7 +1063,7 @@ public final class ParcelScreen extends Screen {
             case FRIENDS -> {
                 graphics.centeredText(
                         this.font,
-                        Component.literal("Deine Freunde"),
+                        Component.translatable("gui.minecraftparcel.friends.title"),
                         contentCenter,
                         contentTop,
                         0xFFFFFFFF
@@ -1013,9 +1071,7 @@ public final class ParcelScreen extends Screen {
 
                 graphics.centeredText(
                         this.font,
-                        Component.literal(
-                                "Die Freundeslisten-Anbindung ist noch nicht fertig."
-                        ),
+                        Component.translatable("gui.minecraftparcel.friends.unavailable"),
                         contentCenter,
                         contentTop + 28,
                         0xFFFFD27A
@@ -1034,11 +1090,10 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal(
-                        "Minecraft Parcel | "
-                                + ParcelConfig.getHost()
-                                + ":"
-                                + ParcelConfig.getPort()
+                Component.translatable(
+                        "gui.minecraftparcel.footer",
+                        ParcelConfig.getHost(),
+                        ParcelConfig.getPort()
                 ),
                 contentCenter,
                 panelTop + panelHeight - 23,
@@ -1052,7 +1107,7 @@ public final class ParcelScreen extends Screen {
     ) {
         graphics.centeredText(
                 this.font,
-                Component.literal("API-Einstellungen"),
+                Component.translatable("gui.minecraftparcel.settings.title"),
                 contentCenter,
                 contentTop,
                 0xFFFFFFFF
@@ -1060,7 +1115,7 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal("Protokoll"),
+                Component.translatable("gui.minecraftparcel.field.protocol"),
                 contentCenter - 72,
                 panelTop + 70,
                 0xFFB8C4D8
@@ -1068,7 +1123,7 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal("Serveradresse"),
+                Component.translatable("gui.minecraftparcel.field.server_address"),
                 contentCenter + 52,
                 panelTop + 70,
                 0xFFB8C4D8
@@ -1076,25 +1131,35 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal("Port"),
+                Component.translatable("gui.minecraftparcel.field.port"),
                 contentCenter - 25,
                 panelTop + 110,
                 0xFFB8C4D8
         );
 
-        int statusColor = settingsStatus.startsWith("Verbindung erfolgreich")
-                || settingsStatus.startsWith("Einstellungen gespeichert")
+        int statusColor = settingsStatusKey.equals(
+                "gui.minecraftparcel.status.connection_success"
+        ) || settingsStatusKey.equals(
+                "gui.minecraftparcel.status.settings_saved"
+        )
                 ? 0xFF8FE0A0
-                : settingsStatus.startsWith("Verbindung wird")
+                : settingsStatusKey.equals(
+                        "gui.minecraftparcel.status.testing_connection"
+                )
                 ? 0xFFFFD27A
-                : settingsStatus.startsWith("Fehler")
-                || settingsStatus.startsWith("Verbindung fehlgeschlagen")
+                : settingsStatusKey.equals(
+                        "gui.minecraftparcel.status.error"
+                ) || settingsStatusKey.equals(
+                        "gui.minecraftparcel.status.connection_failed"
+                ) || settingsStatusKey.equals(
+                        "gui.minecraftparcel.status.invalid_port"
+                )
                 ? 0xFFFF7777
                 : 0xFFB8C4D8;
 
         graphics.centeredText(
                 this.font,
-                Component.literal(settingsStatus),
+                settingsStatus,
                 contentCenter,
                 panelTop + 198,
                 statusColor
@@ -1107,7 +1172,7 @@ public final class ParcelScreen extends Screen {
     ) {
         graphics.centeredText(
                 this.font,
-                Component.literal("Paket versenden"),
+                Component.translatable("gui.minecraftparcel.send.title"),
                 contentCenter,
                 contentTop,
                 0xFFFFFFFF
@@ -1115,7 +1180,7 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal("Empfänger-Spielername"),
+                Component.translatable("gui.minecraftparcel.field.recipient"),
                 contentCenter,
                 panelTop + 70,
                 0xFFB8C4D8
@@ -1148,19 +1213,29 @@ public final class ParcelScreen extends Screen {
 
         graphics.centeredText(
                 this.font,
-                Component.literal(
-                        selectedCount + " Stapel | " + totalCount + " Items"
+                Component.translatable(
+                        "gui.minecraftparcel.send.selection_count",
+                        selectedCount,
+                        totalCount
                 ),
                 contentCenter,
-                contentTop + 65,
+                panelTop + 117,
                 0xFF8FE0A0
         );
 
         graphics.centeredText(
                 this.font,
-                Component.literal(selectionStatus),
+                Component.translatable("gui.minecraftparcel.send.inventory_hint"),
                 contentCenter,
-                panelTop + panelHeight - 45,
+                panelTop + 134,
+                0xFFB8C4D8
+        );
+
+        graphics.centeredText(
+                this.font,
+                selectionStatus,
+                contentCenter,
+                panelTop + panelHeight - 49,
                 0xFFB8C4D8
         );
     }
@@ -1169,18 +1244,23 @@ public final class ParcelScreen extends Screen {
             GuiGraphicsExtractor graphics,
             int contentTop
     ) {
+        int contentLeft = panelLeft + 140;
+        int contentRight = panelLeft + panelWidth - 16;
+        int contentWidth = contentRight - contentLeft;
+        int center = contentLeft + contentWidth / 2;
+
         graphics.centeredText(
                 this.font,
-                Component.literal("Dein Postfach"),
-                contentCenter,
+                Component.translatable("gui.minecraftparcel.inbox.title"),
+                center,
                 contentTop,
                 0xFFFFFFFF
         );
 
         graphics.centeredText(
                 this.font,
-                Component.literal(inboxStatus),
-                contentCenter,
+                inboxStatus,
+                center,
                 contentTop + 29,
                 inboxLoading
                         ? 0xFFFFD27A
@@ -1192,38 +1272,75 @@ public final class ParcelScreen extends Screen {
         int rowTop = contentTop + 55;
         int availableRows = Math.min(deliveries.size(), 4);
 
+        Minecraft minecraft = Minecraft.getInstance();
+
         for (int i = 0; i < availableRows; i++) {
             ParcelApiClient.Delivery delivery = deliveries.get(i);
             int y = rowTop + i * 38;
 
             graphics.fill(
-                    panelLeft + 144,
+                    contentLeft,
                     y,
-                    panelLeft + panelWidth - 18,
+                    contentRight,
                     y + 32,
                     0xFF252D3B
             );
 
+            String senderName = delivery.senderName().isBlank()
+                    ? Component.translatable(
+                            "gui.minecraftparcel.sender.unknown"
+                    ).getString()
+                    : delivery.senderName();
+
+            if (!delivery.senderName().isBlank()) {
+                ResolvableProfile profile = senderProfiles.computeIfAbsent(
+                        senderName,
+                        ResolvableProfile::createUnresolved
+                );
+
+                var renderInfo = minecraft.playerSkinRenderCache()
+                        .getOrDefault(profile);
+
+                PlayerFaceExtractor.extractRenderState(
+                        graphics,
+                        renderInfo.playerSkin(),
+                        contentLeft + 6,
+                        y + 6,
+                        20
+                );
+            } else {
+                graphics.fill(
+                        contentLeft + 6,
+                        y + 6,
+                        contentLeft + 26,
+                        y + 26,
+                        0xFF59677D
+                );
+            }
+
+            int textLeft = contentLeft + 32;
+            int textRight = contentRight - 82;
+            int textCenter = textLeft + (textRight - textLeft) / 2;
+
             graphics.centeredText(
                     this.font,
-                    Component.literal("Paket " + (i + 1)),
-                    panelLeft + 210,
+                    Component.translatable(
+                            "gui.minecraftparcel.inbox.package_number",
+                            i + 1
+                    ),
+                    textCenter,
                     y + 5,
                     0xFFFFFFFF
             );
 
-            String senderName = delivery.senderName().isBlank()
-                    ? "Unbekannt"
-                    : delivery.senderName();
-
             graphics.centeredText(
                     this.font,
-                    Component.literal(
-                            delivery.itemStackCount()
-                                    + " Stapel | Absender: "
-                                    + senderName
+                    Component.translatable(
+                            "gui.minecraftparcel.inbox.package_details",
+                            delivery.itemStackCount(),
+                            senderName
                     ),
-                    panelLeft + 210,
+                    textCenter,
                     y + 18,
                     0xFFB8C4D8
             );
