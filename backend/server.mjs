@@ -418,12 +418,6 @@ const server = http.createServer(async (req, res) => {
                 });
             }
 
-            if (recipient.uuid === sender) {
-                return json(res, 400, {
-                    error: 'cannot send parcels to yourself'
-                });
-            }
-
             const senderName = await getDisplayName(sender);
 
             const delivery = {
