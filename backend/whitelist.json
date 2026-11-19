@@ -1,0 +1,14 @@
+{
+  "players": [
+    {
+      "name": "Skaydar92",
+      "uuid": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "enabled": true
+    },
+    {
+      "name": "Dev",
+      "uuid": "380df991-f603-344c-a090-369bad2a924a",
+      "enabled": true
+    }
+  ]
+}

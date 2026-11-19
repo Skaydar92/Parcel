@@ -194,6 +194,125 @@
       "claimedBy": "380df991-f603-344c-a090-369bad2a924a",
       "claimedAt": "2026-11-18T16:14:56.937Z",
       "deliveredAt": "2026-11-18T16:14:57.001Z"
+    },
+    {
+      "id": "d5aa94a8-8a45-4a48-8033-9c93139bca4d",
+      "requestId": "fc46d9a7-c0d9-4ae8-a242-8a40a34304d6",
+      "senderUuid": "380df991-f603-344c-a090-369bad2a924a",
+      "senderName": "Unbekannter Spieler",
+      "recipientUuid": "3482258a-717b-4377-823f-1b34dda15917",
+      "recipientName": "Heisenburger",
+      "createdAt": "2026-11-19T07:29:53.598Z",
+      "status": "PENDING",
+      "items": [
+        {
+          "id": "minecraft:spruce_log",
+          "count": 1
+        },
+        {
+          "id": "minecraft:leaf_litter",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "886de9d2-61ed-44d8-bad0-2c62e69c50ab",
+      "requestId": "b7a38839-2bbe-42dc-ab74-04687025d7ce",
+      "senderUuid": "380df991-f603-344c-a090-369bad2a924a",
+      "senderName": "Unbekannter Spieler",
+      "recipientUuid": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "recipientName": "Skaydar92",
+      "createdAt": "2026-11-19T07:31:12.552Z",
+      "status": "DELIVERED",
+      "items": [
+        {
+          "id": "minecraft:diamond",
+          "count": 64
+        }
+      ],
+      "claimedBy": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "claimedAt": "2026-11-19T07:32:47.805Z",
+      "deliveredAt": "2026-11-19T07:32:48.010Z"
+    },
+    {
+      "id": "27fc643f-4e0e-42b0-9cc3-d76530687e6e",
+      "requestId": "d4957ad4-8efe-4d80-85fc-b9fa6d5767d8",
+      "senderUuid": "380df991-f603-344c-a090-369bad2a924a",
+      "senderName": "Unbekannter Spieler",
+      "recipientUuid": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "recipientName": "Skaydar92",
+      "createdAt": "2026-11-19T08:08:05.526Z",
+      "status": "DELIVERED",
+      "items": [
+        {
+          "id": "minecraft:coarse_dirt",
+          "count": 1
+        }
+      ],
+      "claimedBy": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "claimedAt": "2026-11-19T08:09:15.383Z",
+      "deliveredAt": "2026-11-19T08:09:15.529Z"
+    },
+    {
+      "id": "b0e1a97c-2a9d-4885-bf84-fc68301c51bd",
+      "requestId": "78a76fa6-2b54-4463-a2cb-4e56fd299a0c",
+      "senderUuid": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "senderName": "Skaydar92",
+      "recipientUuid": "380df991-f603-344c-a090-369bad2a924a",
+      "recipientName": "Dev",
+      "createdAt": "2026-11-19T08:09:30.080Z",
+      "status": "DELIVERED",
+      "items": [
+        {
+          "id": "minecraft:diamond",
+          "count": 64
+        }
+      ],
+      "claimedBy": "380df991-f603-344c-a090-369bad2a924a",
+      "claimedAt": "2026-11-19T08:09:34.836Z",
+      "deliveredAt": "2026-11-19T08:09:34.887Z"
+    },
+    {
+      "id": "54034097-c309-4b07-99ad-44ed710a0142",
+      "requestId": "b69b17bd-8b8d-45ec-8c64-61abcef0bdf6",
+      "senderUuid": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "senderName": "Skaydar92",
+      "recipientUuid": "380df991-f603-344c-a090-369bad2a924a",
+      "recipientName": "Dev",
+      "createdAt": "2026-11-19T08:19:18.587Z",
+      "status": "DELIVERED",
+      "items": [
+        {
+          "id": "minecraft:dirt",
+          "count": 5
+        }
+      ],
+      "claimedBy": "380df991-f603-344c-a090-369bad2a924a",
+      "claimedAt": "2026-11-19T08:19:23.636Z",
+      "deliveredAt": "2026-11-19T08:19:23.720Z"
+    },
+    {
+      "id": "10b706bf-9bcc-4262-889a-defcae435a48",
+      "requestId": "7ef4817d-58b6-4b8c-8706-77c83e360749",
+      "senderUuid": "380df991-f603-344c-a090-369bad2a924a",
+      "senderName": "Unbekannter Spieler",
+      "recipientUuid": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "recipientName": "Skaydar92",
+      "createdAt": "2026-11-19T08:19:36.680Z",
+      "status": "DELIVERED",
+      "items": [
+        {
+          "id": "minecraft:dirt",
+          "count": 5
+        },
+        {
+          "id": "minecraft:diamond",
+          "count": 64
+        }
+      ],
+      "claimedBy": "5c9ebcf5-054c-4b65-835e-1db451564d50",
+      "claimedAt": "2026-11-19T08:19:39.852Z",
+      "deliveredAt": "2026-11-19T08:19:40.033Z"
     }
   ]
 }

@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import dev.minecraftparcel.ParcelApiClient;
+import dev.minecraftparcel.ParcelConfig;
 import dev.minecraftparcel.ParcelNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -30,7 +31,8 @@ public final class ParcelScreen extends Screen {
     private enum Tab {
         INBOX,
         SEND,
-        FRIENDS
+        FRIENDS,
+        SETTINGS
     }
 
     private static final int INVENTORY_COLUMNS = 9;
@@ -42,6 +44,7 @@ public final class ParcelScreen extends Screen {
                     + (INVENTORY_COLUMNS - 1) * SLOT_GAP;
 
     private final Screen parent;
+
     private final Map<Integer, ItemStack> selectedSlots =
             new LinkedHashMap<>();
 
@@ -59,13 +62,20 @@ public final class ParcelScreen extends Screen {
     private boolean inboxRequested;
     private boolean inboxLoading;
     private boolean sendInProgress;
+    private boolean connectionTesting;
 
     private List<ParcelApiClient.Delivery> deliveries = List.of();
 
     private String inboxStatus = "Noch nicht geladen.";
-    private String selectionStatus = "Wähle Items und gib eine Empfänger-UUID ein.";
+    private String selectionStatus =
+            "Wähle Items und gib einen Spielernamen ein.";
+
+    private String settingsStatus = "Noch nicht getestet.";
 
     private EditBox recipientField;
+    private EditBox apiProtocolField;
+    private EditBox apiHostField;
+    private EditBox apiPortField;
 
     private record SerializedItem(
             int slot,
@@ -124,6 +134,16 @@ public final class ParcelScreen extends Screen {
                 22
         ).build());
 
+        addRenderableWidget(Button.builder(
+                Component.literal("Einstellungen"),
+                button -> changeTab(Tab.SETTINGS)
+        ).bounds(
+                sidebarX,
+                panelTop + 136,
+                106,
+                22
+        ).build());
+
         if (activeTab == Tab.INBOX) {
             addRenderableWidget(Button.builder(
                     Component.literal("Aktualisieren"),
@@ -163,12 +183,12 @@ public final class ParcelScreen extends Screen {
                     panelTop + 84,
                     220,
                     20,
-                    Component.literal("Empfänger-UUID")
+                    Component.literal("Empfänger-Spielername")
             );
 
-            recipientField.setMaxLength(36);
+            recipientField.setMaxLength(16);
             recipientField.setHint(
-                    Component.literal("00000000-0000-0000-0000-000000000000")
+                    Component.literal("Minecraft-Spielername")
             );
 
             addRenderableWidget(recipientField);
@@ -180,6 +200,77 @@ public final class ParcelScreen extends Screen {
                     panelLeft + panelWidth - 110,
                     panelTop + 49,
                     98,
+                    20
+            ).build());
+        }
+
+        if (activeTab == Tab.SETTINGS) {
+            apiProtocolField = new EditBox(
+                    this.font,
+                    contentCenter - 110,
+                    panelTop + 83,
+                    75,
+                    20,
+                    Component.literal("Protokoll")
+            );
+
+            apiProtocolField.setMaxLength(5);
+            apiProtocolField.setValue(ParcelConfig.getProtocol());
+            apiProtocolField.setHint(Component.literal("http"));
+
+            addRenderableWidget(apiProtocolField);
+
+            apiHostField = new EditBox(
+                    this.font,
+                    contentCenter - 25,
+                    panelTop + 83,
+                    155,
+                    20,
+                    Component.literal("Serveradresse")
+            );
+
+            apiHostField.setMaxLength(253);
+            apiHostField.setValue(ParcelConfig.getHost());
+            apiHostField.setHint(
+                    Component.literal("127.0.0.1")
+            );
+
+            addRenderableWidget(apiHostField);
+
+            apiPortField = new EditBox(
+                    this.font,
+                    contentCenter - 25,
+                    panelTop + 123,
+                    80,
+                    20,
+                    Component.literal("Port")
+            );
+
+            apiPortField.setMaxLength(5);
+            apiPortField.setValue(
+                    String.valueOf(ParcelConfig.getPort())
+            );
+            apiPortField.setHint(Component.literal("8787"));
+
+            addRenderableWidget(apiPortField);
+
+            addRenderableWidget(Button.builder(
+                    Component.literal("Speichern"),
+                    button -> saveApiSettings()
+            ).bounds(
+                    contentCenter - 110,
+                    panelTop + 165,
+                    105,
+                    20
+            ).build());
+
+            addRenderableWidget(Button.builder(
+                    Component.literal("Verbindung testen"),
+                    button -> testApiConnection()
+            ).bounds(
+                    contentCenter + 2,
+                    panelTop + 165,
+                    128,
                     20
             ).build());
         }
@@ -200,6 +291,69 @@ public final class ParcelScreen extends Screen {
         rebuildWidgets();
     }
 
+    private void saveApiSettings() {
+        if (apiProtocolField == null
+                || apiHostField == null
+                || apiPortField == null) {
+            return;
+        }
+
+        String protocol = apiProtocolField.getValue().trim()
+                .toLowerCase();
+
+        String host = apiHostField.getValue().trim();
+        String portText = apiPortField.getValue().trim();
+
+        int port;
+
+        try {
+            port = Integer.parseInt(portText);
+        } catch (NumberFormatException exception) {
+            settingsStatus = "Ungültiger Port.";
+            return;
+        }
+
+        try {
+            ParcelConfig.save(protocol, host, port);
+
+            settingsStatus = "Einstellungen gespeichert.";
+
+            inboxRequested = false;
+        } catch (IOException | IllegalArgumentException exception) {
+            settingsStatus = "Fehler: " + exception.getMessage();
+        }
+    }
+
+    private void testApiConnection() {
+        if (connectionTesting) {
+            return;
+        }
+
+        saveApiSettings();
+
+        if (!"Einstellungen gespeichert.".equals(settingsStatus)) {
+            return;
+        }
+
+        connectionTesting = true;
+        settingsStatus = "Verbindung wird getestet ...";
+
+        ParcelApiClient.testConnection().whenComplete(
+                (result, error) ->
+                        Minecraft.getInstance().execute(() -> {
+                            connectionTesting = false;
+
+                            if (error != null) {
+                                settingsStatus =
+                                        "Verbindung fehlgeschlagen: "
+                                                + errorMessage(error);
+                            } else {
+                                settingsStatus = result;
+                            }
+                        })
+        );
+    }
+
     private void refreshInbox() {
         if (inboxLoading) {
             return;
@@ -207,7 +361,12 @@ public final class ParcelScreen extends Screen {
 
         inboxRequested = true;
         inboxLoading = true;
-        inboxStatus = "Verbinde mit localhost:8787 ...";
+
+        inboxStatus = "Verbinde mit "
+                + ParcelConfig.getHost()
+                + ":"
+                + ParcelConfig.getPort()
+                + " ...";
 
         try {
             ParcelApiClient client = ParcelApiClient.createLocal();
@@ -241,18 +400,15 @@ public final class ParcelScreen extends Screen {
         }
     }
 
-
     private void sendParcel() {
         if (sendInProgress || recipientField == null) {
             return;
         }
 
-        String recipientUuid = recipientField.getValue().trim();
+        String recipientName = recipientField.getValue().trim();
 
-        try {
-            UUID.fromString(recipientUuid);
-        } catch (IllegalArgumentException exception) {
-            selectionStatus = "Ungültige Empfänger-UUID.";
+        if (!recipientName.matches("[a-zA-Z0-9_]{3,16}")) {
+            selectionStatus = "Ungültiger Minecraft-Spielername.";
             return;
         }
 
@@ -303,28 +459,40 @@ public final class ParcelScreen extends Screen {
                         return;
                     }
 
-                    selectionStatus = "Inventar bestätigt. Übertrage Paket ...";
+                    selectionStatus =
+                            "Inventar bestätigt. Übertrage Paket ...";
 
                     try {
-                        ParcelApiClient client = ParcelApiClient.createLocal();
+                        ParcelApiClient client =
+                                ParcelApiClient.createLocal();
 
                         client.createDelivery(
-                                recipientUuid,
+                                recipientName,
                                 items,
                                 requestId
                         ).whenComplete((result, error) ->
                                 Minecraft.getInstance().execute(() -> {
                                     if (error != null) {
-                                        refundItems(serialized, requestId,
-                                                errorMessage(error));
+                                        refundItems(
+                                                serialized,
+                                                requestId,
+                                                errorMessage(error)
+                                        );
                                         return;
                                     }
 
                                     sendInProgress = false;
                                     selectedSlots.clear();
 
-                                    selectionStatus = "Paket erfolgreich versendet. ID: "
-                                            + shortUuid(result.deliveryId());
+                                    String confirmedName =
+                                            result.recipientName().isBlank()
+                                                    ? recipientName
+                                                    : result.recipientName();
+
+                                    selectionStatus =
+                                            "Paket erfolgreich an "
+                                                    + confirmedName
+                                                    + " versendet.";
                                 })
                         );
 
@@ -337,45 +505,45 @@ public final class ParcelScreen extends Screen {
                     }
                 }
         );
-}
-
-private void refundItems(
-        List<SerializedItem> serialized,
-        String requestId,
-        String originalError
-) {
-    JsonArray items = new JsonArray();
-
-    for (SerializedItem item : serialized) {
-        items.add(item.data());
     }
 
-    JsonObject restoreData = new JsonObject();
-    restoreData.addProperty("deliveryId", "refund-" + requestId);
-    restoreData.add("items", items);
+    private void refundItems(
+            List<SerializedItem> serialized,
+            String requestId,
+            String originalError
+    ) {
+        JsonArray items = new JsonArray();
 
-    selectionStatus = "Versand fehlgeschlagen. Stelle Items wieder her ...";
+        for (SerializedItem item : serialized) {
+            items.add(item.data());
+        }
 
-    ParcelNetwork.send(
-            "ADD",
-            restoreData.toString(),
-            result -> {
-                sendInProgress = false;
+        JsonObject restoreData = new JsonObject();
+        restoreData.addProperty("deliveryId", "refund-" + requestId);
+        restoreData.add("items", items);
 
-                if (result.success()) {
-                    selectionStatus = "Versand fehlgeschlagen. "
-                            + "Items wurden wiederhergestellt: "
-                            + originalError;
-                } else {
-                    selectionStatus = "KRITISCH: Versand fehlgeschlagen und "
-                            + "Wiederherstellung fehlgeschlagen: "
-                            + result.message()
-                            + ". Bitte Serverinventar prüfen.";
+        selectionStatus =
+                "Versand fehlgeschlagen. Stelle Items wieder her ...";
+
+        ParcelNetwork.send(
+                "ADD",
+                restoreData.toString(),
+                result -> {
+                    sendInProgress = false;
+
+                    if (result.success()) {
+                        selectionStatus = "Versand fehlgeschlagen. "
+                                + "Items wurden wiederhergestellt: "
+                                + originalError;
+                    } else {
+                        selectionStatus = "KRITISCH: Versand fehlgeschlagen und "
+                                + "Wiederherstellung fehlgeschlagen: "
+                                + result.message()
+                                + ". Bitte Serverinventar prüfen.";
+                    }
                 }
-            }
-    );
-}
-
+        );
+    }
 
     private void claimDelivery(ParcelApiClient.Delivery delivery) {
         if (inboxLoading) {
@@ -409,68 +577,68 @@ private void refundItems(
         }
     }
 
+    private void receiveClaimedDelivery(
+            ParcelApiClient client,
+            ParcelApiClient.ClaimedDelivery claimed
+    ) {
+        if (Minecraft.getInstance().player == null) {
+            inboxLoading = false;
+            inboxStatus = "Kein Spieler verfügbar. "
+                    + "Die Reservierung läuft nach fünf Minuten ab.";
+            return;
+        }
 
-private void receiveClaimedDelivery(
-        ParcelApiClient client,
-        ParcelApiClient.ClaimedDelivery claimed
-) {
-    if (Minecraft.getInstance().player == null) {
-        inboxLoading = false;
-        inboxStatus = "Kein Spieler verfügbar. "
-                + "Die Reservierung läuft nach fünf Minuten ab.";
-        return;
-    }
+        if (claimed.items() == null || claimed.items().isEmpty()) {
+            inboxLoading = false;
+            inboxStatus = "Das Paket enthält keine Items.";
+            return;
+        }
 
-    if (claimed.items() == null || claimed.items().isEmpty()) {
-        inboxLoading = false;
-        inboxStatus = "Das Paket enthält keine Items.";
-        return;
-    }
+        JsonObject addData = new JsonObject();
+        addData.addProperty("deliveryId", claimed.deliveryId());
+        addData.add("items", claimed.items());
 
-    JsonObject addData = new JsonObject();
-    addData.addProperty("deliveryId", claimed.deliveryId());
-    addData.add("items", claimed.items());
+        inboxStatus =
+                "Server prüft den verfügbaren Inventarplatz ...";
 
-    inboxStatus = "Server prüft den verfügbaren Inventarplatz ...";
+        ParcelNetwork.send(
+                "ADD",
+                addData.toString(),
+                result -> {
+                    if (!result.success()) {
+                        inboxLoading = false;
+                        inboxStatus = "Abholung fehlgeschlagen: "
+                                + result.message();
+                        return;
+                    }
 
-    ParcelNetwork.send(
-            "ADD",
-            addData.toString(),
-            result -> {
-                if (!result.success()) {
-                    inboxLoading = false;
-                    inboxStatus = "Abholung fehlgeschlagen: "
-                            + result.message();
-                    return;
+                    inboxStatus =
+                            "Items eingefügt. Bestätige Paket ...";
+
+                    client.completeClaim(
+                            claimed.deliveryId(),
+                            claimed.claimToken()
+                    ).whenComplete((ignored, completeError) ->
+                            Minecraft.getInstance().execute(() -> {
+                                inboxLoading = false;
+
+                                if (completeError != null) {
+                                    inboxStatus = "Items wurden eingefügt, "
+                                            + "aber die Backend-Bestätigung "
+                                            + "ist fehlgeschlagen: "
+                                            + errorMessage(completeError);
+                                    return;
+                                }
+
+                                inboxStatus = claimed.items().size()
+                                        + " Item-Stapel erfolgreich abgeholt.";
+
+                                refreshInbox();
+                            })
+                    );
                 }
-
-                inboxStatus = "Items eingefügt. Bestätige Paket ...";
-
-                client.completeClaim(
-                        claimed.deliveryId(),
-                        claimed.claimToken()
-                ).whenComplete((ignored, completeError) ->
-                        Minecraft.getInstance().execute(() -> {
-                            inboxLoading = false;
-
-                            if (completeError != null) {
-                                inboxStatus = "Items wurden eingefügt, "
-                                        + "aber die Backend-Bestätigung "
-                                        + "ist fehlgeschlagen: "
-                                        + errorMessage(completeError);
-                                return;
-                            }
-
-                            inboxStatus = claimed.items().size()
-                                    + " Item-Stapel erfolgreich abgeholt.";
-
-                            refreshInbox();
-                        })
-                );
-            }
-    );
-}
-
+        );
+    }
 
     private static boolean canFitAll(
             Inventory inventory,
@@ -834,7 +1002,6 @@ private void receiveClaimedDelivery(
         switch (activeTab) {
             case INBOX -> renderInbox(graphics, contentTop);
             case SEND -> renderSend(graphics, contentTop);
-
             case FRIENDS -> {
                 graphics.centeredText(
                         this.font,
@@ -854,6 +1021,7 @@ private void receiveClaimedDelivery(
                         0xFFFFD27A
                 );
             }
+            case SETTINGS -> renderSettings(graphics, contentTop);
         }
 
         graphics.fill(
@@ -866,10 +1034,70 @@ private void receiveClaimedDelivery(
 
         graphics.centeredText(
                 this.font,
-                Component.literal("Minecraft Parcel | localhost:8787"),
+                Component.literal(
+                        "Minecraft Parcel | "
+                                + ParcelConfig.getHost()
+                                + ":"
+                                + ParcelConfig.getPort()
+                ),
                 contentCenter,
                 panelTop + panelHeight - 23,
                 0xFF8492A8
+        );
+    }
+
+    private void renderSettings(
+            GuiGraphicsExtractor graphics,
+            int contentTop
+    ) {
+        graphics.centeredText(
+                this.font,
+                Component.literal("API-Einstellungen"),
+                contentCenter,
+                contentTop,
+                0xFFFFFFFF
+        );
+
+        graphics.centeredText(
+                this.font,
+                Component.literal("Protokoll"),
+                contentCenter - 72,
+                panelTop + 70,
+                0xFFB8C4D8
+        );
+
+        graphics.centeredText(
+                this.font,
+                Component.literal("Serveradresse"),
+                contentCenter + 52,
+                panelTop + 70,
+                0xFFB8C4D8
+        );
+
+        graphics.centeredText(
+                this.font,
+                Component.literal("Port"),
+                contentCenter - 25,
+                panelTop + 110,
+                0xFFB8C4D8
+        );
+
+        int statusColor = settingsStatus.startsWith("Verbindung erfolgreich")
+                || settingsStatus.startsWith("Einstellungen gespeichert")
+                ? 0xFF8FE0A0
+                : settingsStatus.startsWith("Verbindung wird")
+                ? 0xFFFFD27A
+                : settingsStatus.startsWith("Fehler")
+                || settingsStatus.startsWith("Verbindung fehlgeschlagen")
+                ? 0xFFFF7777
+                : 0xFFB8C4D8;
+
+        graphics.centeredText(
+                this.font,
+                Component.literal(settingsStatus),
+                contentCenter,
+                panelTop + 198,
+                statusColor
         );
     }
 
@@ -887,7 +1115,7 @@ private void receiveClaimedDelivery(
 
         graphics.centeredText(
                 this.font,
-                Component.literal("Empfänger-UUID"),
+                Component.literal("Empfänger-Spielername"),
                 contentCenter,
                 panelTop + 70,
                 0xFFB8C4D8
@@ -978,36 +1206,28 @@ private void receiveClaimedDelivery(
 
             graphics.centeredText(
                     this.font,
-                    Component.literal(
-                            "Paket " + shortUuid(delivery.id())
-                    ),
+                    Component.literal("Paket " + (i + 1)),
                     panelLeft + 210,
                     y + 5,
                     0xFFFFFFFF
             );
+
+            String senderName = delivery.senderName().isBlank()
+                    ? "Unbekannt"
+                    : delivery.senderName();
 
             graphics.centeredText(
                     this.font,
                     Component.literal(
                             delivery.itemStackCount()
                                     + " Stapel | Absender: "
-                                    + shortUuid(delivery.senderUuid())
+                                    + senderName
                     ),
                     panelLeft + 210,
                     y + 18,
                     0xFFB8C4D8
             );
         }
-    }
-
-    private static String shortUuid(String value) {
-        if (value == null || value.isBlank()) {
-            return "unbekannt";
-        }
-
-        return value.length() > 8
-                ? value.substring(0, 8)
-                : value;
     }
 
     private static String errorMessage(Throwable error) {

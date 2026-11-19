@@ -1,0 +1,167 @@
+---- Minecraft Crash Report ----
+// Don't be sad, have a hug! <3
+
+Time: 2026-11-18 15:48:01
+Description: stage
+
+net.neoforged.fml.ModLoadingException: Loading errors encountered:
+	- Minecraft Parcel (minecraftparcel) encountered an error while dispatching the net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent event
+	  java.lang.IllegalArgumentException: Cannot register client handler for unknown payload type Type[id=minecraftparcel:inventory_result]
+
+	at net.neoforged.fml.ModLoader.waitForFuture(ModLoader.java:253) ~[loader-11.0.16.jar:11.0] {}
+	at net.neoforged.fml.ModLoader.waitForTask(ModLoader.java:155) ~[loader-11.0.16.jar:11.0] {}
+	at net.neoforged.fml.ModLoader.runInitTask(ModLoader.java:135) ~[loader-11.0.16.jar:11.0] {}
+	at TRANSFORMER/neoforge@26.2.0.93/net.neoforged.neoforge.client.loading.ClientModLoader.finish(ClientModLoader.java:68) [neoforge-26.2.0.93-universal.jar:?] {}
+	at TRANSFORMER/minecraft@26.2/net.minecraft.client.Minecraft.<init>(Minecraft.java:719) [minecraft-patched-26.2.0.93.jar:?] {}
+	at TRANSFORMER/minecraft@26.2/net.minecraft.client.main.Main.main(Main.java:280) [minecraft-patched-26.2.0.93.jar:?] {}
+	at net.neoforged.fml.startup.Client.main(Client.java:19) [loader-11.0.16.jar:11.0] {}
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[?:?] {}
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[?:?] {}
+	at net.neoforged.devlaunch.Main.main(Main.java:57) [DevLaunch-1.0.2.jar:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at net.neoforged.fml.ModLoader.waitForFuture(ModLoader.java:253) ~[loader-11.0.16.jar:11.0] {}
+	at net.neoforged.fml.ModLoader.waitForTask(ModLoader.java:155) ~[loader-11.0.16.jar:11.0] {}
+-- Finish mod loading --
+Details:
+	Modules: 
+Stacktrace:
+	at TRANSFORMER/neoforge@26.2.0.93/net.neoforged.neoforge.client.loading.ClientModLoader.finish(ClientModLoader.java:68) [neoforge-26.2.0.93-universal.jar:?] {}
+	at TRANSFORMER/minecraft@26.2/net.minecraft.client.Minecraft.<init>(Minecraft.java:719) [minecraft-patched-26.2.0.93.jar:?] {}
+	at TRANSFORMER/minecraft@26.2/net.minecraft.client.main.Main.main(Main.java:280) [minecraft-patched-26.2.0.93.jar:?] {}
+	at net.neoforged.fml.startup.Client.main(Client.java:19) [loader-11.0.16.jar:11.0] {}
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[?:?] {}
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[?:?] {}
+	at net.neoforged.devlaunch.Main.main(Main.java:57) [DevLaunch-1.0.2.jar:?] {}
+
+
+-- Uptime --
+Details:
+	JVM uptime: 5.448s
+	Wall uptime: 0.761s
+	High-res time: 4.973s
+	Client ticks: 0 ticks / 0.000s
+Stacktrace:
+	at TRANSFORMER/minecraft@26.2/net.minecraft.client.Minecraft.fillReport(Minecraft.java:2446) [minecraft-patched-26.2.0.93.jar:?] {}
+	at TRANSFORMER/neoforge@26.2.0.93/net.neoforged.neoforge.client.loading.ClientModLoader.finish(ClientModLoader.java:74) [neoforge-26.2.0.93-universal.jar:?] {}
+	at TRANSFORMER/minecraft@26.2/net.minecraft.client.Minecraft.<init>(Minecraft.java:719) [minecraft-patched-26.2.0.93.jar:?] {}
+	at TRANSFORMER/minecraft@26.2/net.minecraft.client.main.Main.main(Main.java:280) [minecraft-patched-26.2.0.93.jar:?] {}
+	at net.neoforged.fml.startup.Client.main(Client.java:19) [loader-11.0.16.jar:11.0] {}
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[?:?] {}
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[?:?] {}
+	at net.neoforged.devlaunch.Main.main(Main.java:57) [DevLaunch-1.0.2.jar:?] {}
+
+
+-- Last reload --
+Details:
+	Reload number: 0
+
+-- System Details --
+Details:
+	Minecraft Version: 26.2
+	Minecraft Version ID: 26.2
+	Operating System: Linux (amd64) version 6.18.15
+	Java Version: 25.0.5.0.3, N/A
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), Oracle Corporation
+	Memory: 351932336 bytes (335 MiB) / 578813952 bytes (552 MiB) up to 16710107136 bytes (15936 MiB)
+	Memory (heap): init: 1000MiB, used: 212MiB, committed: 552MiB, max: 15936MiB
+	Memory (non-head): init: 007MiB, used: 142MiB, committed: 145MiB, max: 000MiB
+	CPUs: 22
+	Processor Vendor: GenuineIntel
+	Processor Name: Intel(R) Core(TM) Ultra 9 185H
+	Identifier: Intel64 Family 6 Model 170 Stepping 4
+	Microarchitecture: unknown
+	Frequency (GHz): -0.00
+	Number of physical packages: 1
+	Number of physical CPUs: 16
+	Number of logical CPUs: 22
+	Graphics card #0 name: unknown
+	Graphics card #0 vendor: unknown
+	Graphics card #0 VRAM (MiB): 0.00
+	Graphics card #0 deviceId: unknown
+	Graphics card #0 versionInfo: unknown
+	Virtual memory max (MiB): 101976.64
+	Virtual memory used (MiB): 8699.02
+	Swap memory total (MiB): 70108.81
+	Swap memory used (MiB): 5.63
+	Space in storage for jna.tmpdir (MiB): <path not set>
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): <path not set>
+	Space in storage for io.netty.native.workdir (MiB): <path not set>
+	Space in storage for java.io.tmpdir (MiB): available: 357811.03, total: 890311.88
+	Space in storage for workdir (MiB): available: 357811.03, total: 890311.88
+	Operating System Version: GNU/Linux NixOS 26.05 (Yarara) build 6.18.15
+	Process Elevated: false
+	Process Loads: Uptime: 6s, user: 19s (318.09%), kernel: 1s (16.63%), total: 20s (334.72%)
+	Process Virtual Size (MiB): 19994.48
+	Process Resident Size (MiB): 980.93
+	JVM Flags: 0 total; 
+	Debug Flags: 0 total; 
+	Launched Version: 26.2.0.93
+	Backend library: LWJGL version 3.4.1+2
+	Window size: 854x480
+	Surface Info: unconfigured
+	GFLW Platform: x11
+	Graphics Device: Mesa Intel(R) Arc(tm) Graphics (MTL)
+	Graphics Backend: OpenGL
+	Graphics Vendor: Intel
+	Graphics Drivers: 4.6 (Core Profile) Mesa 26.0.1
+	Graphics Device Extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+	Graphics Device Type: DISCRETE
+	Graphics Device Features: DeviceFeatures[shaderDrawParameters=true, multiDrawDirectInterleaved=false, multiDrawDirectSeparate=true, multiDrawIndirect=true, drawIndirect=true, nonZeroFirstInstance=true, persistentMapping=true]
+	GL debug messages: 
+	Is Modded: Definitely; Client brand changed to 'neoforge'
+	Universe: 400921fb54442d18
+	Type: Client
+	Transparency: regular
+	Render Distance: 16/16 chunks
+	Narrator config: OFF
+	Narrator status: false
+	Resource Packs: vanilla, mod_resources, mod/minecraftparcel, mod/neoforge (incompatible)
+	Sound Cache: 0 bytes in 0 buffers
+	Current Language: en_us
+	Locale: en_US
+	System encoding: UTF-8
+	File encoding: UTF-8
+	CPU: 22x Intel(R) Core(TM) Ultra 9 185H
+	Class Processors: 
+		00.00%: neoforge:neoforge_dev_dist_cleaner
+		00.00%: neoforge:computing_frames (marker)
+		00.00%: neoforge:runtime_enum_extender
+		05.29%: neoforge:access_transformer
+		00.06%: neoforge:mixin
+		00.00%: neoforge:simple_processors_default (marker)
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.biome.biome
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.block.flowerpotblock
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.levelgen.structure.structure
+		00.29%: neoforge.coremods:method_redirector
+	Mod List: 
+		minecraft-patched-26.2.0.93.jar                   |Minecraft                     |minecraft                     |26.2                |Manifest: NOSIGNATURE
+		main                                              |Minecraft Parcel              |minecraftparcel               |0.2.0               |Manifest: NOSIGNATURE
+		neoforge-26.2.0.93-universal.jar                  |NeoForge                      |neoforge                      |26.2.0.93           |Manifest: NOSIGNATURE
+	Crash Report UUID: 76eb53fa-6497-4910-824c-9e513ffd579e
+	FML: 11.0.16
+	NeoForge: 26.2.0.93
+	Class Processors: 
+		00.00%: neoforge:neoforge_dev_dist_cleaner
+		00.00%: neoforge:computing_frames (marker)
+		00.00%: neoforge:runtime_enum_extender
+		05.29%: neoforge:access_transformer
+		00.06%: neoforge:mixin
+		00.00%: neoforge:simple_processors_default (marker)
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.biome.biome
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.block.flowerpotblock
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.levelgen.structure.structure
+		00.29%: neoforge.coremods:method_redirector
+	Mod List: 
+		minecraft-patched-26.2.0.93.jar                   |Minecraft                     |minecraft                     |26.2                |Manifest: NOSIGNATURE
+		main                                              |Minecraft Parcel              |minecraftparcel               |0.2.0               |Manifest: NOSIGNATURE
+		neoforge-26.2.0.93-universal.jar                  |NeoForge                      |neoforge                      |26.2.0.93           |Manifest: NOSIGNATURE
+	Crash Report UUID: d86319d4-c23e-4657-9210-e8519797e32a
+	FML: 11.0.16
+	NeoForge: 26.2.0.93

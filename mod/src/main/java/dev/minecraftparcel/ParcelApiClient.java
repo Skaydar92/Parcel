@@ -5,14 +5,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.minecraft.client.Minecraft;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,14 +20,13 @@ import java.util.concurrent.CompletionException;
 
 public final class ParcelApiClient {
 
-    private static final URI BASE_URI =
-            URI.create("http://localhost:8787");
-
+    private final URI baseUri;
     private final HttpClient http;
-    private final String bearerToken;
+    private final String playerName;
 
-    private ParcelApiClient(String bearerToken) {
-        this.bearerToken = bearerToken;
+    private ParcelApiClient(String playerName, URI baseUri) {
+        this.playerName = playerName;
+        this.baseUri = baseUri;
 
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
@@ -36,31 +34,100 @@ public final class ParcelApiClient {
     }
 
     public static ParcelApiClient createLocal() throws IOException {
-        List<Path> candidates = List.of(
-                Path.of("parcel-token.txt"),
-                Path.of("run", "parcel-token.txt"),
-                Path.of("mod", "run", "parcel-token.txt")
-        );
+        Minecraft minecraft = Minecraft.getInstance();
 
-        for (Path path : candidates) {
-            if (Files.isRegularFile(path)) {
-                String token = Files.readString(path).trim();
-
-                if (!token.isEmpty()) {
-                    return new ParcelApiClient(token);
-                }
-            }
+        if (minecraft == null || minecraft.getUser() == null) {
+            throw new IOException(
+                    "Minecraft-Spieler konnte nicht ermittelt werden."
+            );
         }
 
-        throw new IOException(
-                "Token-Datei nicht gefunden. Erwartet wird run/parcel-token.txt."
+        String playerName = minecraft.getUser().getName();
+
+        if (playerName == null || playerName.isBlank()) {
+            throw new IOException(
+                    "Minecraft-Spielername ist nicht verfügbar."
+            );
+        }
+
+        System.out.println("Parcel Player: " + playerName);
+        System.out.println(
+                "Parcel UUID: " + minecraft.getUser().getProfileId()
         );
+
+        try {
+            return new ParcelApiClient(
+                    playerName,
+                    ParcelConfig.getBaseUri()
+            );
+        } catch (IllegalArgumentException exception) {
+            throw new IOException(
+                    "Ungültige Parcel-Serveradresse.",
+                    exception
+            );
+        }
+    }
+
+    public static CompletableFuture<String> testConnection() {
+        URI uri;
+
+        try {
+            uri = ParcelConfig.getBaseUri().resolve("/health");
+        } catch (IllegalArgumentException exception) {
+            return CompletableFuture.failedFuture(exception);
+        }
+
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(Duration.ofSeconds(10))
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+
+        return client.sendAsync(
+                request,
+                HttpResponse.BodyHandlers.ofString()
+        ).thenApply(response -> {
+            if (response.statusCode() != 200) {
+                throw new CompletionException(
+                        new IOException(
+                                "HTTP " + response.statusCode()
+                        )
+                );
+            }
+
+            try {
+                JsonObject json = JsonParser.parseString(response.body())
+                        .getAsJsonObject();
+
+                if (json.has("ok")
+                        && json.get("ok").getAsBoolean()) {
+                    return "Verbindung erfolgreich.";
+                }
+
+                throw new IOException(
+                        "Ungültige Health-Antwort vom Server."
+                );
+            } catch (RuntimeException exception) {
+                throw new CompletionException(
+                        new IOException(
+                                "Ungültige Serverantwort.",
+                                exception
+                        )
+                );
+            } catch (IOException exception) {
+                throw new CompletionException(exception);
+            }
+        });
     }
 
     private HttpRequest.Builder authorizedRequest(String path) {
-        return HttpRequest.newBuilder(BASE_URI.resolve(path))
+        return HttpRequest.newBuilder(baseUri.resolve(path))
                 .timeout(Duration.ofSeconds(15))
-                .header("Authorization", "Bearer " + bearerToken)
+                .header("X-Parcel-Player", playerName)
                 .header("Accept", "application/json");
     }
 
@@ -123,7 +190,7 @@ public final class ParcelApiClient {
 
                         result.add(new Delivery(
                                 getString(item, "id"),
-                                getString(item, "senderUuid"),
+                                getString(item, "senderName"),
                                 getString(item, "createdAt"),
                                 stacks.size()
                         ));
@@ -131,7 +198,6 @@ public final class ParcelApiClient {
                 }
 
                 return List.copyOf(result);
-
             } catch (IOException exception) {
                 throw new CompletionException(exception);
             }
@@ -139,13 +205,13 @@ public final class ParcelApiClient {
     }
 
     public CompletableFuture<SendResult> createDelivery(
-            String recipientUuid,
+            String recipientName,
             JsonArray items,
             String requestId
     ) {
         JsonObject payload = new JsonObject();
 
-        payload.addProperty("recipientUuid", recipientUuid);
+        payload.addProperty("recipientName", recipientName);
         payload.addProperty("requestId", requestId);
         payload.add("items", items);
 
@@ -163,9 +229,9 @@ public final class ParcelApiClient {
 
                 return new SendResult(
                         getString(root, "deliveryId"),
-                        getString(root, "status")
+                        getString(root, "status"),
+                        getString(root, "recipientName")
                 );
-
             } catch (IOException exception) {
                 if (response.statusCode() == 200) {
                     try {
@@ -173,10 +239,11 @@ public final class ParcelApiClient {
 
                         return new SendResult(
                                 getString(root, "deliveryId"),
-                                getString(root, "status")
+                                getString(root, "status"),
+                                getString(root, "recipientName")
                         );
                     } catch (IOException ignored) {
-                        // Die ursprüngliche HTTP-Fehlermeldung wird weitergegeben.
+                        // Ursprüngliche HTTP-Fehlermeldung weitergeben.
                     }
                 }
 
@@ -201,15 +268,16 @@ public final class ParcelApiClient {
                 JsonObject root = parseResponse(response, 200);
 
                 JsonArray items = root.has("items")
+                        && root.get("items").isJsonArray()
                         ? root.getAsJsonArray("items")
                         : new JsonArray();
 
                 return new ClaimedDelivery(
                         getString(root, "deliveryId"),
                         getString(root, "claimToken"),
+                        getString(root, "senderName"),
                         items
                 );
-
             } catch (IOException exception) {
                 throw new CompletionException(exception);
             }
@@ -251,19 +319,21 @@ public final class ParcelApiClient {
 
     public record Delivery(
             String id,
-            String senderUuid,
+            String senderName,
             String createdAt,
             int itemStackCount
     ) {}
 
     public record SendResult(
             String deliveryId,
-            String status
+            String status,
+            String recipientName
     ) {}
 
     public record ClaimedDelivery(
             String deliveryId,
             String claimToken,
+            String senderName,
             JsonArray items
     ) {}
 }
